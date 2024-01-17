@@ -1,4 +1,4 @@
-using GLMakie
+using CairoMakie
 
 function plotstep!(f, u::AbstractArray, p, configs; s=1, umax=maximum(abs, u), bipolar=!all(u .>= 0), title="")
     colormap = bipolar ? :seismic : [(:white, 0), (:orange, 1)]

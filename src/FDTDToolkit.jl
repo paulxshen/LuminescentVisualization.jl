@@ -1,6 +1,6 @@
 module FDTDToolkit
-using GLMakie
-using GLMakie: Axis
+using CairoMakie
+using CairoMakie: Axis
 export recordsim, plotstep!
 include("main.jl")
 greet() = print("Hello World!")
