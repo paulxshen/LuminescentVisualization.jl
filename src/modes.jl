@@ -42,11 +42,11 @@ using Gridap.Geometry
 using Gridap.Visualization
 using Gridap.ReferenceFEs
 using GridapGmsh
-using GridapMakie, CairoMakie
+using GridapMakie, GLMakie
 
 using Femwell.Maxwell.Waveguide
 
-CairoMakie.inline!(true)
+GLMakie.inline!(true)
 
 model = GmshDiscreteModel("mesh.msh")
 Ω = Triangulation(model)
