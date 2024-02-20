@@ -10,8 +10,11 @@ clip_by_rect = pyimport("shapely.ops").clip_by_rect
 OrderedDict = pyimport("collections").OrderedDict
 mesh_from_OrderedDict = pyimport("femwell.mesh").mesh_from_OrderedDict
 
-wg_width = 0.5
-wg_thickness = 0.22
+function slab_modes(
+    wg_width=0.5,
+    wg_thickness=0.22,)
+
+end
 slab_width = 3
 slab_thickness = 0.11
 core = shapely.geometry.box(-wg_width / 2, 0, wg_width / 2, wg_thickness)
