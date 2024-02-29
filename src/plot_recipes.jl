@@ -2,6 +2,7 @@ function plotfield!(
     f,
     u::AbstractArray,
     ;
+    field=:Ex,
     geometry=nothing,
     source_instances=[],
     monitor_instances=[],
@@ -14,7 +15,7 @@ function plotfield!(
     # width=600, height=400,
     kw...)
 
-    title = "$title\nt = $t\n"
+    title = "$title\nt = $t\n(figure includes PML layers)"
 
     # colormap = [(:blue, 1), (:red, 1)]
     # colormap = :seismic
@@ -42,9 +43,9 @@ function plotfield!(
     if !isempty(monitor_instances)
         a = zeros(size(u))
         for (i, m) = enumerate(monitor_instances)
-            a[first(values(m.idxs))...] .= 1
+            a[m.fi[field]...] .= 1
             text = isempty(m.label) ? "m$i" : m.label
-            text!(f, first(values(m.centers))..., ; text, align=(:center, :center))
+            text!(f, m.c..., ; text, align=(:center, :center))
         end
         volume!(f, a, colormap=[(:white, 0), (:teal, 0.2)])#, colorrange=(ϵ1, ϵ2))
         # # save("temp/$t.png", f)
@@ -52,9 +53,10 @@ function plotfield!(
 
     "plot sources"
     for (i, s) = enumerate(source_instances)
+        # volume!(f, s._g[field], colormap=[(:white, 0), (:yellow, 0.2)])
         volume!(f, first(values(s._g)), colormap=[(:white, 0), (:yellow, 0.2)])
         text = isempty(s.label) ? "s$i" : s.label
-        text!(f, first(values(s.c))..., ; text, align=(:center, :center))
+        text!(f, s.c..., ; text, align=(:center, :center))
     end
     # # save("temp/$t.png", f)
 end
@@ -62,9 +64,10 @@ end
 
 function recordsim(fn, u, y=nothing;
     dt, geometry=nothing,
+    field=:Ex,
     source_instances=[],
     monitor_instances=[],
-    lims_scale=0.5,
+    lims_scale=0.2,
     umax=maximum(abs, u[round(Int, length(u) / 2)]) * lims_scale,
     bipolar=true,
     elevation=nothing,
@@ -87,38 +90,43 @@ function recordsim(fn, u, y=nothing;
     n = length(u)
     T = dt * (n - 1)
     t = 0:frameat:T
-    f = Figure(size=(400, 500))
+    f = Figure(size=(600, 500))
     g1 = f[1, 1]
     g2 = f[2, 1]
-    rowsize!(f.layout, 1, Auto(1.5))
+    colsize!(f.layout, 1, Auto(2.5))
 
-    r = record(f, fn, t; framerate) do t
+    r = GLMakie.record(f, fn, t; framerate) do t
         i = round(Int, t / dt + 1)
         empty!(f)
         # ax = Axis(f[1, 1];)
 
-        plotfield!(g1, u[i]; t, geometry, source_instances, monitor_instances, bipolar, umax, elevation, azimuth,# title=pop!(axis1, :title),
+        plotfield!(g1, u[i];
+            field, t, geometry, source_instances, monitor_instances, bipolar, umax, elevation, azimuth,# title=pop!(axis1, :title),
             axis1...)
+        if t == T
+            display(f)
+        end
 
         if !isnothing(y)
             n, = size(y)
             if isempty(labels)
                 labels = String.(Symbol.((1:n)))
             end
-            ylims = extrema(y)
+            # ylims = extrema.(y)
             axis2 = merge((;
                     title="monitors",
-                    limits=((0, T), ylims),), axis2)
+                    limits=((0, T), nothing),), axis2)
             # labels = pop!(axis2, :labels)
             #    xlabel= pop!(axis2,:xlabel)
             #    ylabel= pop!(axis2,:ylabel)
             ax = Axis(g2; axis2...)
-            for (y, label) = zip(eachcol(y), labels)
+            for (y, label) = zip(y, labels)
                 lines!(ax, 0:dt:(i-1)*dt, y[1:i]; label,)
             end
             axislegend()
+            rowsize!(f.layout, 1, Auto(2.5))
         end
     end
     println("saved simulation recording to $fn")
-    r
+    f
 end
