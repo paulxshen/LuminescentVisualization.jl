@@ -14,8 +14,8 @@ function plotfield!(
     t=0,
     # width=600, height=400,
     kw...)
-
-    title = "$title\nt = $t\n(figure includes PML layers)"
+    t = round(t; digits=2)
+    title = "$title t = $t\n(figure includes PML layers)"
 
     # colormap = [(:blue, 1), (:red, 1)]
     # colormap = :seismic
@@ -67,8 +67,8 @@ function recordsim(fn, u, y=nothing;
     field=:Ex,
     source_instances=[],
     monitor_instances=[],
-    lims_scale=0.2,
-    umax=maximum(abs, u[round(Int, length(u) / 2)]) * lims_scale,
+    rel_lims=0.2,
+    umax=maximum(abs, u[round(Int, length(u) / 2)]) * rel_lims,
     bipolar=true,
     elevation=nothing,
     azimuth=nothing,
@@ -84,7 +84,7 @@ function recordsim(fn, u, y=nothing;
     # geometry = pop!(axis1, :geometry)
     # source_instances = pop!(axis1, :source_instances)
     # monitor_instances = pop!(axis1, :monitor_instances)
-    # lims_scale = pop!(axis1, :lims_scale)
+    # rel_lims = pop!(axis1, :rel_lims)
     # # umax = pop!(axis1,:umax)
     # bipolar = pop!(axis1, :bipolar)
     n = length(u)

@@ -1,4 +1,4 @@
-module FDTDToolkit
+module LuminesceVisualization
 
 
 include("main.jl")
