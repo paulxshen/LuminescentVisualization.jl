@@ -1,4 +1,4 @@
-name = "LuminesceVisualization"
+name = "LuminescentVisualization"
 uuid = "30a06cd2-db0b-4af1-aa56-cda59bdd9ab0"
 authors = ["Paul Shen <pxshen@alumni.stanford.edu>"]
 version = "0.1.0"

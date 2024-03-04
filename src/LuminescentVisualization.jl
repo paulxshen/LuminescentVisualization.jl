@@ -1,4 +1,4 @@
-module LuminesceVisualization
+module LuminescentVisualization
 
 
 include("main.jl")
