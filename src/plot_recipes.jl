@@ -1,7 +1,4 @@
-function plotfield!(
-    f,
-    u::AbstractArray,
-    ;
+function plotfield!(g, u::AbstractArray, ;
     field=:Ex,
     geometry=nothing,
     source_instances=[],
@@ -15,28 +12,27 @@ function plotfield!(
     # width=600, height=400,
     kw...)
     t = round(t; digits=2)
-    title = "$title t = $t\n(figure includes PML layers)"
+    title = "$title\n t = $t (figure includes PML layers)"
 
     # colormap = [(:blue, 1), (:red, 1)]
     # colormap = :seismic
     colormap = bipolar ? :seismic : [(:white, 0), (:orange, 1)]
-    colorrange = bipolar ? (-1, 1) : (0, 1)
+    colorrange = bipolar ? (-1, 1) .* umax : (0, 1)
     algorithm = bipolar ? :absorption : :mip
-    u ./= umax
     # if bipolar
     #     u = (u .+ 1) ./ 2
     # end
     d = ndims(u)
 
     "plot field"
-    ax, __ = volume(f, u; axis=(; kw..., type=Axis3, title,), algorithm, colormap, colorrange,)
+    ax, v = volume(g[1, 1], u; axis=(; kw..., type=Axis3, title,), algorithm, colormap, colorrange,)
     !isnothing(elevation) && (ax.elevation[] = elevation)
     !isnothing(azimuth) && (ax.azimuth[] = azimuth)
-    # Colorbar(f)
+    Colorbar(g[1, 2], v, label="$field")
 
     if !isnothing(geometry)
         "plot geometry"
-        volume!(f, geometry, colormap=[(:white, 0), (:gray, 0.2)])#, colorrange=(ϵ1, ϵ2))
+        volume!(g[1, 1], geometry, colormap=[(:white, 0), (:gray, 0.2)])#, colorrange=(ϵ1, ϵ2))
     end
 
     "plot monitors"
@@ -45,18 +41,18 @@ function plotfield!(
         for (i, m) = enumerate(monitor_instances)
             a[m.fi[field]...] .= 1
             text = isempty(m.label) ? "m$i" : m.label
-            text!(f, m.c..., ; text, align=(:center, :center))
+            text!(g[1, 1], m.c..., ; text, align=(:center, :center))
         end
-        volume!(f, a, colormap=[(:white, 0), (:teal, 0.2)])#, colorrange=(ϵ1, ϵ2))
+        volume!(g[1, 1], a, colormap=[(:white, 0), (:teal, 0.2)])#, colorrange=(ϵ1, ϵ2))
         # # save("temp/$t.png", f)
     end
 
     "plot sources"
     for (i, s) = enumerate(source_instances)
-        # volume!(f, s._g[field], colormap=[(:white, 0), (:yellow, 0.2)])
-        volume!(f, first(values(s._g)), colormap=[(:white, 0), (:yellow, 0.2)])
+        # volume!(g, s._g[field], colormap=[(:white, 0), (:yellow, 0.2)])
+        volume!(g[1, 1], first(values(s._g)), colormap=[(:white, 0), (:yellow, 0.2)])
         text = isempty(s.label) ? "s$i" : s.label
-        text!(f, s.c..., ; text, align=(:center, :center))
+        text!(g[1, 1], s.c..., ; text, align=(:center, :center))
     end
     # # save("temp/$t.png", f)
 end
