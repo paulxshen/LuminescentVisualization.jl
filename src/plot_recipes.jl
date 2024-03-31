@@ -23,34 +23,59 @@ function plotfield!(g, u::AbstractArray, ;
     #     u = (u .+ 1) ./ 2
     # end
     d = ndims(u)
-
+    if d == 3
+        umax /= 3
+    end
     "plot field"
-    ax, v = volume(g[1, 1], u; axis=(; kw..., type=Axis3, title,), algorithm, colormap, colorrange,)
-    !isnothing(elevation) && (ax.elevation[] = elevation)
-    !isnothing(azimuth) && (ax.azimuth[] = azimuth)
+    if d == 3
+        ax, v = volume(g[1, 1], u; axis=(; kw..., type=Axis3, title,), algorithm, colormap, colorrange,)
+        !isnothing(elevation) && (ax.elevation[] = elevation)
+        !isnothing(azimuth) && (ax.azimuth[] = azimuth)
+    else
+        ax, v = heatmap(g[1, 1], u; axis=(; kw..., title,), colormap, colorrange,)
+    end
     Colorbar(g[1, 2], v, label="$field")
 
     if !isnothing(geometry)
         "plot geometry"
-        volume!(g[1, 1], geometry, colormap=[(:white, 0), (:gray, 0.2)])#, colorrange=(ϵ1, ϵ2))
+        a, b = extrema(geometry)
+        geometry = (geometry .- a) / (b - a)
+        if d == 3
+            volume!(g[1, 1], geometry, colormap=[(:white, 0), (:gray, 0.2)], colorrange=extrema(geometry))
+        else
+            heatmap!(g[1, 1], geometry, colormap=[(:white, 0), (:gray, 0.2)], colorrange=extrema(geometry))
+        end
     end
 
     "plot monitors"
     if !isempty(monitor_instances)
         a = zeros(size(u))
         for (i, m) = enumerate(monitor_instances)
-            a[m.fi[field]...] .= 1
-            text = isempty(m.label) ? "m$i" : m.label
-            text!(g[1, 1], m.c..., ; text, align=(:center, :center))
+            # if isa(m,Ortho)
+            try
+
+                a[m.fi[field]...] .= 1
+                text = isempty(m.label) ? "m$i" : m.label
+                text!(g[1, 1], m.c..., ; text, align=(:center, :center))
+            catch
+            end
         end
-        volume!(g[1, 1], a, colormap=[(:white, 0), (:teal, 0.2)])#, colorrange=(ϵ1, ϵ2))
-        # # save("temp/$t.png", f)
+        if d == 3
+            volume!(g[1, 1], a, colormap=[(:white, 0), (:teal, 0.2)])#, colorrange=(ϵ1, ϵ2))
+        else
+            heatmap!(g[1, 1], a, colormap=[(:white, 0), (:teal, 0.2)])#, colorrange=(ϵ1, ϵ2))
+            # # save("temp/$t.png", f)
+        end
     end
 
     "plot sources"
     for (i, s) = enumerate(source_instances)
         # volume!(g, s._g[field], colormap=[(:white, 0), (:yellow, 0.2)])
-        volume!(g[1, 1], first(values(s._g)), colormap=[(:white, 0), (:yellow, 0.2)])
+        if d == 3
+            volume!(g[1, 1], first(values(s._g)) |> real, colormap=[(:white, 0), (:yellow, 0.2)])
+        else
+            heatmap!(g[1, 1], first(values(s._g)) |> real, colormap=[(:white, 0), (:yellow, 0.2)])
+        end
         text = isempty(s.label) ? "s$i" : s.label
         text!(g[1, 1], s.c..., ; text, align=(:center, :center))
     end
@@ -105,13 +130,14 @@ function recordsim(fn, u, y=nothing;
 
         if !isnothing(y)
             n, = size(y)
+            ylims = extrema(stack(y))
             if isempty(labels)
                 labels = String.(Symbol.((1:n)))
             end
             # ylims = extrema.(y)
             axis2 = merge((;
                     title="monitors",
-                    limits=((0, T), nothing),), axis2)
+                    limits=((0, T), ylims),), axis2)
             # labels = pop!(axis2, :labels)
             #    xlabel= pop!(axis2,:xlabel)
             #    ylabel= pop!(axis2,:ylabel)
